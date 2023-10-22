@@ -256,7 +256,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   defaultToolsBuilder: (Type t, _) {
                     return DrawingBoard.defaultTools(t, _drawingController)
                       ..insert(
-                        1,
+                        3,
                         DefToolItem(
                           icon: Icons.change_history_rounded,
                           isActive: t == Triangle,

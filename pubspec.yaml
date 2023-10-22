@@ -1,7 +1,5 @@
-name: flutter_drawing_board
-description: A Flutter package of drawing board, provides basic drawing tools, canvas operations, and image data acquisition.
+name: flutter_drawing
 version: 0.5.0
-homepage: https://github.com/fluttercandies/flutter_drawing_board
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -10,6 +8,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:

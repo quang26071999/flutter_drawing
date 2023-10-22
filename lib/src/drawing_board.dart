@@ -2,8 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'drawing_controller.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+import 'drawing_controller.dart';
 import 'helper/ex_value_builder.dart';
 import 'helper/get_size.dart';
 import 'paint_contents/circle.dart';
@@ -161,20 +162,32 @@ class _DrawingBoardState extends State<DrawingBoard> {
 
     if (widget.showDefaultActions || widget.showDefaultTools) {
       content = Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           Expanded(child: content),
-          if (widget.showDefaultActions) _buildDefaultActions,
-          if (widget.showDefaultTools) _buildDefaultTools,
         ],
       );
     }
 
-    return Listener(
-      onPointerDown: (PointerDownEvent pde) =>
-          _controller.addFingerCount(pde.localPosition),
-      onPointerUp: (PointerUpEvent pue) =>
-          _controller.reduceFingerCount(pue.localPosition),
-      child: content,
+    return Scaffold(
+      body: Listener(
+        onPointerDown: (PointerDownEvent pde) =>
+            _controller.addFingerCount(pde.localPosition),
+        onPointerUp: (PointerUpEvent pue) =>
+            _controller.reduceFingerCount(pue.localPosition),
+        child: content,
+      ),
+      bottomNavigationBar: Container(
+          color: Colors.black,
+          height: 100,
+          width: MediaQuery.of(context).size.width,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _buildDefaultActions,
+              _buildDefaultTools,
+            ],
+          )),
     );
   }
 
@@ -246,16 +259,50 @@ class _DrawingBoardState extends State<DrawingBoard> {
 
   /// 构建默认操作栏
   Widget get _buildDefaultActions {
-    return Material(
-      color: Colors.white,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.zero,
-        child: Row(
-          children: <Widget>[
-            SizedBox(
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: 50,
+      child: Row(
+        children: <Widget>[
+          InkWell(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Chọn màu'),
+                    content: SingleChildScrollView(
+                      child: ColorPicker(
+                        pickerColor: _controller.getColor,
+                        onColorChanged: (Color color) {
+                          // _controller.setColor(color: color);
+                          setState(() {
+                            _controller.setStyle(color: color);
+                          });
+                        },
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            child: Container(
+              width: 24,
               height: 24,
-              width: 160,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: _controller.getColor),
+            ),
+          ),
+          IconButton(
+              icon: const Icon(
+                CupertinoIcons.arrow_turn_up_left,
+                color: Colors.grey,
+              ),
+              onPressed: () => _controller.undo()),
+          Expanded(
+            child: SizedBox(
+              height: 24,
               child: ExValueBuilder<DrawConfig>(
                 valueListenable: _controller.drawConfig,
                 shouldRebuild: (DrawConfig p, DrawConfig n) =>
@@ -271,47 +318,46 @@ class _DrawingBoardState extends State<DrawingBoard> {
                 },
               ),
             ),
-            IconButton(
-                icon: const Icon(CupertinoIcons.arrow_turn_up_left),
-                onPressed: () => _controller.undo()),
-            IconButton(
-                icon: const Icon(CupertinoIcons.arrow_turn_up_right),
-                onPressed: () => _controller.redo()),
-            IconButton(
-                icon: const Icon(CupertinoIcons.rotate_right),
-                onPressed: () => _controller.turn()),
-            IconButton(
-                icon: const Icon(CupertinoIcons.trash),
-                onPressed: () => _controller.clear()),
-          ],
-        ),
+          ),
+          IconButton(
+              icon: const Icon(
+                CupertinoIcons.arrow_turn_up_right,
+                color: Colors.grey,
+              ),
+              onPressed: () {}),
+          IconButton(
+              icon: const Icon(
+                CupertinoIcons.trash,
+                color: Colors.grey,
+              ),
+              onPressed: () => _controller.clear()),
+        ],
       ),
     );
   }
 
   /// 构建默认工具栏
   Widget get _buildDefaultTools {
-    return Material(
-      color: Colors.white,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.zero,
-        child: ExValueBuilder<DrawConfig>(
-          valueListenable: _controller.drawConfig,
-          shouldRebuild: (DrawConfig p, DrawConfig n) =>
-              p.contentType != n.contentType,
-          builder: (_, DrawConfig dc, ___) {
-            final Type currType = dc.contentType;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.zero,
+      child: ExValueBuilder<DrawConfig>(
+        valueListenable: _controller.drawConfig,
+        shouldRebuild: (DrawConfig p, DrawConfig n) =>
+            p.contentType != n.contentType,
+        builder: (_, DrawConfig dc, ___) {
+          final Type currType = dc.contentType;
 
-            return Row(
-              children:
-                  (widget.defaultToolsBuilder?.call(currType, _controller) ??
-                          DrawingBoard.defaultTools(currType, _controller))
-                      .map((DefToolItem item) => _DefToolItemWidget(item: item))
-                      .toList(),
-            );
-          },
-        ),
+          return Row(
+            children:
+                (widget.defaultToolsBuilder?.call(currType, _controller) ??
+                        DrawingBoard.defaultTools(currType, _controller))
+                    .map((DefToolItem item) => _DefToolItemWidget(
+                          item: item,
+                        ))
+                    .toList(),
+          );
+        },
       ),
     );
   }
@@ -323,9 +369,9 @@ class DefToolItem {
     required this.icon,
     required this.isActive,
     this.onTap,
-    this.color,
-    this.activeColor = Colors.blue,
-    this.iconSize,
+    this.color = Colors.grey,
+    this.activeColor = Colors.white,
+    this.iconSize = 28.0,
   });
 
   final Function()? onTap;
@@ -349,6 +395,7 @@ class _DefToolItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: item.onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       icon: Icon(
         item.icon,
         color: item.isActive ? item.activeColor : item.color,

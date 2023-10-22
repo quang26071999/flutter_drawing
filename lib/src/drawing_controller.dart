@@ -354,6 +354,10 @@ class DrawingController {
     return _history.map((PaintContent e) => e.toJson()).toList();
   }
 
+  // void setColor({required Color color}) {
+  //   setStyle(color: color);
+  // }
+
   /// 刷新表层画板
   void _refresh() {
     painter?._refresh();
